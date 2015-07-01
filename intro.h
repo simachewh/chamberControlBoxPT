@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QtSerialPort/QtSerialPort>
+#include <QThread>
 
 class Intro : public QObject
 {
@@ -12,7 +13,8 @@ public:
     QSerialPort *serial;
     bool open;
     QByteArray *recievedData;
-//    QTimer *timer;
+    QTimer *timer;
+    int i;
 
     /**
      * @brief opPort function. A function to setup serial port parameters
@@ -28,9 +30,21 @@ public:
 
     void setQuestionMarks();
 
-
+    /**
+     * @brief initValues function.
+     * reinitializes the process values, temperature and humidity.
+     */
     void initValues();
+
+    /**
+     * @brief wrToPort function.
+     * Writes the given data on the serial device.
+     * @param data
+     */
     void wrToPort(QByteArray data);
+
+
+    void testSend();
 
     /**
      * @brief Intro constructor.
@@ -67,6 +81,7 @@ signals:
 public slots:
     void readPort();
     void on_newData_arived();
+    void testSendSlot();
 };
 
 #endif // INRO_H

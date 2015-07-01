@@ -18,21 +18,25 @@ Intro::Intro(QObject *parent) : QObject(parent)
 
     dryTemp = 20;
     wetTemp = 18;
-    humidity = 67;
+    humidity = 13;
 
     ack = new QByteArray(1, 0x06);
     setCommOff();
     setQuestionMarks();
     initValues();
 
+    timer = new QTimer(this);
+    i = 1;
 
 
 //    QString s(*currentValues);
 //    qDebug() << s;
+    connect(timer, SIGNAL(timeout()), this, SLOT(testSendSlot()));
 
     connect(serial, SIGNAL(readyRead()), this, SLOT(readPort()));
     connect(this, SIGNAL(newData()), this, SLOT(on_newData_arived()));
 
+    timer->start(100);
 }
 
 Intro::~Intro(){
@@ -40,7 +44,7 @@ Intro::~Intro(){
 }
 
 void Intro::opPort(){
-    serial->setPortName("ttyUSB1");
+    serial->setPortName("ttyUSB0");
     open = serial->open(QIODevice::ReadWrite);
     serial->setBaudRate(QSerialPort::Baud9600);
     serial->setDataBits(QSerialPort::Data8);
@@ -53,9 +57,9 @@ void Intro::opPort(){
 void Intro::wrToPort(QByteArray data){
 
     if(serial->isOpen()){
-        serial->write(data);
+        int i = serial->write(data);
         QString str(data);
-        qDebug() << "wrToPort()- Serial data : " << str << endl;
+        qDebug() << "wrToPort()- Serial data : " << i << " : " <<str << endl;
     }else{
         qDebug() << "wrToPort()- Serial port is open : " << open << endl;
     }
@@ -75,6 +79,7 @@ void Intro::on_newData_arived(){
         char comandId = recievedData->at(2);
         switch (comandId) {
         case 'A':
+            initValues();
             wrToPort(*currentValues);
             break;
         case 'I':
@@ -92,24 +97,69 @@ void Intro::on_newData_arived(){
     }
 }
 
+void Intro::testSendSlot(){
+   // testSend();
+
+    if(i == 4) i=1;
+
+    switch (i) {
+    case 1:
+        qDebug() << 1;
+        wrToPort(*ack);
+        break;
+    case 2:
+        qDebug() << 2;
+        initValues();
+        wrToPort(*currentValues);
+        break;
+    case 3:
+        qDebug() << 3;
+        wrToPort(*commOff);
+        break;
+    case 4:
+        qDebug() << 4;
+         wrToPort(*questionMarks);
+        break;
+    default:
+        break;
+    }
+    i++;
+}
 
 void Intro::initValues(){
 
     if(dryTemp < 150 ){
-        dryTemp += 3.95;
+        dryTemp += 1.03;
     }
 
-    if(humidity < 99){
-        humidity += 3.8;
+    if(humidity < 95){
+        humidity += 1.8;
     }
-    wetTemp = dryTemp - humidity/20;
+    wetTemp = dryTemp - 1.1;
 
     QString ss = "0A+" + QString("%1").arg(dryTemp, 6, 'f', 2, '0') + " +"
             + QString("%1").arg(wetTemp, 6, 'f', 2, '0') + " "
-            + QString("%1").arg(humidity, 4, 'f', 1, '0') + "\n";
-    qDebug() << ss<< endl;
+            + QString("%1").arg(humidity, 4, 'f', 1, '0');
+    qDebug() <<"init value: " << ss<< endl;
     QByteArray baStr = ss.toLatin1();
-    *currentValues = ss.toLatin1();
+    //baStr.prepend(0x02);
+    baStr.append(0x0d);
+    *currentValues = baStr;
+}
+
+void Intro::testSend(){
+   // QThread *thread = this->thread();
+    //forever{
+        initValues();
+        this->wrToPort(*this->ack);
+        //thread->msleep(1000);
+        this->wrToPort(*currentValues);
+        //thread->msleep(1000);
+        this->wrToPort(*commOff);
+        //thread->msleep(1000);
+        this->wrToPort(*questionMarks);
+        //thread->msleep(1000);
+    //}
 }
 
 
