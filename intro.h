@@ -9,7 +9,8 @@ class Intro : public QObject
 {
     Q_OBJECT
 public:
-
+    enum chCommands {ACK, B = 'B', A = 'A', I = 'I'};
+    enum pcCommands {O = 'O', BR, AQ, IY};
     QSerialPort *serial;
     bool open;
     QByteArray *recievedData;
@@ -54,6 +55,7 @@ public:
     ~Intro();
 
 private:
+
     /**
      * @brief wetTemp. A property to hold value for current wet temperature.
      */
@@ -78,10 +80,15 @@ private:
 
 signals:
     void newData();
+    void chCommandState(Intro::chCommands);
+    void pcCommandState(Intro::pcCommands);
+
 public slots:
     void readPort();
     void on_newData_arived();
     void testSendSlot();
+    void on_pcCommandChanged(Intro::pcCommands);
+    void on_chCommandChanged(Intro::chCommands);
 };
 
 #endif // INRO_H
