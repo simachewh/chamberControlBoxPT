@@ -31,11 +31,7 @@ public:
 
     void setQuestionMarks();
 
-    /**
-     * @brief initValues function.
-     * reinitializes the process values, temperature and humidity.
-     */
-    void initValues();
+
 
     /**
      * @brief wrToPort function.
@@ -89,6 +85,11 @@ public slots:
     void testSendSlot();
     void on_pcCommandChanged(Intro::pcCommands);
     void on_chCommandChanged(Intro::chCommands);
+    /**
+     * @brief initValues function.
+     * reinitializes the process values, temperature and humidity.
+     */
+    void initValues();
 };
 
 #endif // INRO_H

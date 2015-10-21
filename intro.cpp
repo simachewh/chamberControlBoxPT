@@ -16,8 +16,8 @@ Intro::Intro(QObject *parent) : QObject(parent)
     commOff = new QByteArray();
     questionMarks = new QByteArray();
 
-    dryTemp = 20;
-    wetTemp = 18;
+    dryTemp = 10;
+    wetTemp = 7;
     humidity = 13;
 
     ack = new QByteArray(1, 0x06);
@@ -31,12 +31,13 @@ Intro::Intro(QObject *parent) : QObject(parent)
 
 //    QString s(*currentValues);
 //    qDebug() << s;
-    connect(timer, SIGNAL(timeout()), this, SLOT(testSendSlot()));
+    connect(timer, SIGNAL(timeout()), this, SLOT(initValues()));
 
     connect(serial, SIGNAL(readyRead()), this, SLOT(readPort()));
-    connect(this, SIGNAL(pcCommandState(Intro::pcCommands)), this, SLOT(on_pcCommandChanged(Intro::pcCommands)));
+    connect(this, SIGNAL(pcCommandState(Intro::pcCommands)),
+            this, SLOT(on_pcCommandChanged(Intro::pcCommands)));
 
-    //timer->start(250);
+    timer->start(1000);
 }
 
 Intro::~Intro(){
@@ -94,20 +95,36 @@ void Intro::readPort(){
 
 
 void Intro::initValues(){
-
-    if(dryTemp < 150 ){
-        dryTemp += 1.03;
+    int t = 0;
+    int h = 0;
+    if(dryTemp > 150){
+        t = 1;
+    }else{
+        t = 0;
+    }
+    if(humidity > 96){
+        h = 1;
+    }else{
+        h = 0;
     }
 
-    if(humidity < 95){
-        humidity += 1.8;
+    if(t == 0){
+        dryTemp += 0.03;
+    }else if(t == 1){
+        dryTemp -= 0.12;
     }
-    wetTemp = dryTemp - 1.1;
+
+    if(h == 0){
+        humidity += 0.8;
+    }else if(h == 1){
+        humidity -= 0.67;
+    }
+    wetTemp = dryTemp - 0.1;
 
     QString ss = "0A+" + QString("%1").arg(dryTemp, 6, 'f', 2, '0') + " +"
             + QString("%1").arg(wetTemp, 6, 'f', 2, '0') + " "
             + QString("%1").arg(humidity, 4, 'f', 1, '0');
-    qDebug() <<"init value: " << ss<< endl;
+//    qDebug() <<"init value: " << ss<< endl;
     QByteArray baStr = ss.toLatin1();
     baStr.prepend(0x02);
     baStr.append(0x0d);
@@ -214,7 +231,7 @@ void Intro::on_pcCommandChanged(Intro::pcCommands command){
     }else if(command == BR){
         wrToPort(*commOff);
     }else if(command == AQ){
-        initValues();
+        //initValues();
         wrToPort(*currentValues);
     }else if(command == IY){
         wrToPort(*questionMarks);
